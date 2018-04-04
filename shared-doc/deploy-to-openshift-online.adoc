@@ -1,10 +1,15 @@
-[[deploy_the_quickstart_to_openshift_online]]
-= Deploy the Quickstart to OpenShift Online
+[[deploy_the_quickstart_to_openshift]]
+= Deploy the Quickstart to OpenShift
 
 Use these instructions to deploy the quickstart to {OpenShiftOnlineName}. If you do not yet have an OpenShift Online account and are interested in signing up for one, see link:{LinkOpenShiftSignup}[Choose a Plan] in the OpenShift Online documentation located on the Red Hat Customer Portal. For information about running {ProductShortName} on {OpenShiftOnlineName}, see link:{LinkOpenShiftOnlineGuide}[_{EapForOpenshiftOnlineBookName}_], also located on the Red Hat Customer Portal.
 
-[[create_and_deploy_the_quickstart_project]]
-== Create and Deploy the Quickstart Project
+You can deploy a quickstart project to OpenShift in either of the following ways.
+
+* You can xref:create_and_deploy_the_quickstart_project_using_wizard[use the web-based wizard] in the OpenShift console.
+* You can xref:create_and_deploy_the_quickstart_project_using_command_line[use the OpenShift command line interface].
+
+[[create_and_deploy_the_quickstart_project_using_wizard]]
+== Create and Deploy the Quickstart Project Using the Wizard
 
 Follow these instructions to deploy this quickstart to OpenShift Online.
 
@@ -12,21 +17,21 @@ Follow these instructions to deploy this quickstart to OpenShift Online.
 . On the *View All Projects* or *Welcome to Project* page, click *Create Project*.
 . On the *Create Project* page, enter the following information:
 +
-[source,subs="+quotes,attributes+"]
+[source,subs="+quotes,attributes+",options="nowrap"]
 ----
-*Name:*  {artifactId}
-*Display Name* {artifactId}
-*Description:* {artifactId}
+*Name:*  {artifactId}-project
+*Display Name* {artifactId}-project
+*Description:* {artifactId}-project
 ----
 
 . Click *Create* to create the project.
-. On the *My Projects* page, choose your new *{artifactId}* and click *Browse Catalog*.
+. On the *My Projects* page, choose your new *{artifactId}-project* and click *Browse Catalog*.
 . Choose *JBoss EAP 7.1 (no https)* and then click *Next* to view the *Information* page.
 . Click *Next* to navigate to the *Configuration* page. . . Enter the following information. You can leave the remaining fields as they are.
 +
 [source,subs="+quotes,attributes+"]
 ----
-*Add to Project:* {artifactId}
+*Add to Project:* {artifactId}-project
 *Application Name:* {artifactId}
 *Custom http Route Hostname:* (leave blank)
 *Git Repository URL:* {githubRepoUrl}
@@ -37,7 +42,7 @@ Follow these instructions to deploy this quickstart to OpenShift Online.
 . Click the *Create* button.
 . Click on the *Continue to the project overview* link.
 
-* You should see "Build #1 is running ..." with the console log below.
+* You should see "Build #_N_ is running ..." with the console log below.
 +
 [source,subs="+quotes,attributes+"]
 ----
@@ -54,7 +59,114 @@ Pushing ...
 . Click the *Overview* tab to see the `{artifactId}` deployment.
 . Click on the application URL on the right side of the page to view the running application. It should be in the following pattern:
 +
-[source,subs="+quotes,attributes+"]
+[source,subs="+quotes,attributes+",options="nowrap"]
+----
+http://__APPLICATION_NAME__-__PROJECT_NAME__.__PORT__.__HOST__.openshiftapps.com
+----
+
+[[create_and_deploy_the_quickstart_project_using_command_line]]
+== Create and Deploy the Quickstart Project Using the Command Line
+
+If you have not yet installed the OpenShift Container Platform command line interface (CLI), see xref:download_and_configure_openshift_client_tools[Download and Configure the OpenShift Client Tools] for installation instructions.
+
+. Log in to the OpenShift console and click on the drop-down arrow next to your user name in upper right corner.
+. Use the `oc login` command to log in to the OpenShift instance
+* Click *Copy Login Command* to copy the command to the clipboard.
+* Paste the command into a terminal.
++
+[source,subs="+quotes,attributes+",options="nowrap"]
+----
+$ oc login https://__PATH_TO_OPENSHIFT_INSTANCE__ --token=__TOKEN_ID__
+----
+. Create a new project to work in.
++
+[source,subs="+quotes,attributes+",options="nowrap"]
+----
+$ oc new-project {artifactId}-project
+----
+
+. Create the service account
++
+[source,subs="+quotes,attributes+",options="nowrap"]
+----
+$ oc create serviceaccount {artifactId}-service-account
+----
+
+. Add the view role to the service account.
++
+[source,subs="+quotes,attributes+",options="nowrap"]
+----
+$ oc policy add-role-to-user view system:serviceaccount:{artifactId}-project:artifactId-service-account
+----
+
+. Create a keystore.
++
+[source,subs="+quotes,attributes+",options="nowrap"]
+----
+$ keytool -genkey -keyalg RSA -alias {artifactId}-demo-selfsigned -keystore {artifactId}-keystore.jks -validity 360 -keysize 2048
+----
+
+.  Create a secret from the keystore.
++
+[source,subs="+quotes,attributes+",options="nowrap"]
+----
+$ oc secrets new {artifactId}-secret {artifactId}-keystore.jks
+----
+
+. Add the secret to the service account.
++
+[source,subs="+quotes,attributes+",options="nowrap"]
+----
+$ oc secrets link {artifactId}-service-account {artifactId}-secret
+----
+
+. Import the latest {ProductShortName} for OpenShift image streams and templates.
++
+[source,subs="+quotes,attributes+",options="nowrap"]
+----
+$ for resource in \
+  {OpenShiftTemplatePrefix}-image-stream.json \
+  {OpenShiftTemplatePrefix}-amq-persistent-s2i.json \
+  {OpenShiftTemplatePrefix}-amq-s2i.json \
+  {OpenShiftTemplatePrefix}-basic-s2i.json \
+  {OpenShiftTemplatePrefix}-https-s2i.json \
+  {OpenShiftTemplatePrefix}-mongodb-persistent-s2i.json \
+  {OpenShiftTemplatePrefix}-mongodb-s2i.json \
+  {OpenShiftTemplatePrefix}-mysql-persistent-s2i.json \
+  {OpenShiftTemplatePrefix}-mysql-s2i.json \
+  {OpenShiftTemplatePrefix}-postgresql-persistent-s2i.json \
+  {OpenShiftTemplatePrefix}-postgresql-s2i.json \
+  {OpenShiftTemplatePrefix}-sso-s2i.json \
+  {OpenShiftTemplatePrefix}-third-party-db-s2i.json \
+  {OpenShiftTemplatePrefix}-tx-recovery-s2i.json
+do
+  oc replace --force -f \
+https://raw.githubusercontent.com/jboss-openshift/application-templates/master/eap/${resource}
+done
+----
+
+.  Deploy the quickstart to OpenShift
++
+[source,subs="+quotes,attributes+",options="nowrap"]
+----
+oc new-app --template={OpenShiftTemplatePrefix}-basic-s2i \
+ -p IMAGE_STREAM_NAMESPACE="{artifactId}-project" \
+ -p SOURCE_REPOSITORY_URL="{githubRepoUrl}" \
+ -p SOURCE_REPOSITORY_REF="{githubRepoBranch}" \
+ -p CONTEXT_DIR="" -p ARTIFACT_DIR="{artifactId}/target" --build-env="MAVEN_ARGS_APPEND=-pl {artifactId}"
+----
+
+. Log in to the OpenShift console and browse to your new project.
+
++
+[source,subs="+quotes,attributes+",options="nowrap"]
+----
+https://__PATH_TO_OPENSHIFT_INSTANCE__/console/project/{artifactId}-project/overview
+----
+
+. Click on the application URL on the right side of the page to view the running application. It should be in the following pattern:
++
+[source,subs="+quotes,attributes+",options="nowrap"]
 ----
 http://__APPLICATION_NAME__-__PROJECT_NAME__.__PORT__.__HOST__.openshiftapps.com
 ----
@@ -66,3 +178,23 @@ Follow these instructions to delete the project from OpenShift Online.
 
 . Go to the *View All Projects* page and select *Delete Project* from the drop down list to the right of the *{artifactId}* project.
 . Type the name of the project to confirm, and then click *Delete*
+
+[[download_and_configure_openshift_client_tools]]
+== Download and Configure the OpenShift Client Tools
+
+Follow these instructions if you have not yet installed the OpenShift Container Platform command line interface (CLI) and plan to use it to deploy applications to OpenShift.
+
+. Download and upzip the https://github.com/openshift/origin/releases/latest[OpenShift Client Tools] for your operating system.
+
+. Add the folder to your __PATH__ environment variable.
++
+NOTE: For Linux systems, if you prefer you can simply copy the `oc` executable to the `/usr/local/bin/` directory.
+
+. Test the command by typing the following in a terminal.
+
+[source]
+----
+$ oc version
+----
+
+For more information, see the https://docs.openshift.com/enterprise/latest/cli_reference/index.html[OpenShift CLI Reference.]
