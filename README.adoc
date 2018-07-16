@@ -31,7 +31,7 @@ Make sure you read this entire document before you attempt to work with the quic
 [[use_of_product_home_and_jboss_home_variables]]
 == Use of {jbossHomeName} and JBOSS_HOME Variables
 
-The quickstart `README` files use the _replaceable_ value `__{jbossHomeName}__` to denote the path to the {productName} installation. When you encounter this value in a `README` file, make sure you replace it with the actual path to your {productName} installation. The installation path is described in detail here: link:{useProductHomeDocUrl}[Use of {jbossHomeName} and JBOSS_HOME Variables].
+The quickstart `README` files use the _replaceable_ value `__{jbossHomeName}__` to denote the path to the {productName} installation. When you encounter this value in a `README` file, make sure you replace it with the actual path to your {productName} installation. The installation path is described in detail here: link:{useProductHomeDocUrl}[Use of __{jbossHomeName}__ and __JBOSS_HOME__ Variables].
 
 [[available_quickstarts]]
 == Available Quickstarts
@@ -43,7 +43,7 @@ NOTE: Some of these quickstarts use the H2 database included with {productName}.
 //<TOC>
 [cols="1,1,2,1,1", options="header"]
 |===
-| Quickstart Name | Demonstrated Technologies | Description | Experience Level Required | Prerequisites 
+| Quickstart Name | Demonstrated Technologies | Description | Experience Level Required | Prerequisites
 | link:app-client/README{outfilesuffix}[app-client]|EJB, EAR, AppClient | The `app-client` quickstart demonstrates how to code and package a client app and use the {productName} client container to start the client `Main` program. | Intermediate | _none_
 | link:batch-processing/README{outfilesuffix}[batch-processing]|CDI, Batch 1.0, JSF | The `batch-processing` quickstart shows how to use chunk oriented batch jobs to import a file to a database. | Intermediate | _none_
 | link:bean-validation/README{outfilesuffix}[bean-validation]|CDI, JPA, BV | The `bean-validation` quickstart provides Arquillian tests to demonstrate how to use CDI, JPA, and Bean Validation. | Beginner | _none_
